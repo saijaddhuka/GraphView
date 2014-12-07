@@ -56,7 +56,7 @@ public class BarGraphView extends GraphView {
 			// lines
 			float x = ((graphwidth / hors) * i) + horstart;
 			paint.setColor(graphViewStyle.getGridColor());
-			canvas.drawLine(x, height - border, x, border, paint);
+			//canvas.drawLine(x, height - border, x, border, paint);
 
             if(getShowHorizontalLabels()) {
                 // text
@@ -71,7 +71,7 @@ public class BarGraphView extends GraphView {
 	@Override
 	public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight,
 			float border, double minX, double minY, double diffX, double diffY,
-			float horstart, GraphViewSeriesStyle style) {
+			float horstart, GraphViewSeries.GraphViewSeriesStyle style) {
 		float colwidth = graphwidth / (values.length);
 
 		paint.setStrokeWidth(style.thickness);
@@ -88,7 +88,7 @@ public class BarGraphView extends GraphView {
 			if (style.getValueDependentColor() != null) {
 				paint.setColor(style.getValueDependentColor().get(values[i]));
 			} else {
-				paint.setColor(style.color);
+				paint.setColor(Color.parseColor("#F8E71C"));
 			}
 
 			float left = (i * colwidth) + horstart -offset;
@@ -105,6 +105,7 @@ public class BarGraphView extends GraphView {
 				canvas.drawText(formatLabel(values[i].getY(), false), (left+right)/2, top, paint);
 			}
 		}
+        paint.setColor(style.color);
 	}
 
 	public boolean getDrawValuesOnTop() {
