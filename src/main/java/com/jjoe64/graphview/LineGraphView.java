@@ -32,10 +32,22 @@ import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
  * Line Graph View. This draws a line chart.
  */
 public class LineGraphView extends GraphView {
+
+    private final float TOUCH_TOLERANCE = 5;
+    private static final String TAG="LineGraphView";
 	private final Paint paintBackground;
 	private boolean drawBackground;
 	private boolean drawDataPoints;
 	private float dataPointsRadius = 10f;
+    private double difY,minXX,minYY,difX;
+    private float tempborder;
+    private boolean onTouch=false;
+    private double x,y;
+    private String label;
+    private float mX,mY;
+
+
+
 
 	public LineGraphView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -53,17 +65,31 @@ public class LineGraphView extends GraphView {
 		paintBackground.setColor(Color.rgb(20, 40, 60));
 		paintBackground.setStrokeWidth(4);
 		paintBackground.setAlpha(128);
+
 	}
 
-	@Override
-	public void drawSeries(Canvas canvas, GraphViewDataInterface[] values, float graphwidth, float graphheight, float border, double minX, double minY, double diffX, double diffY, float horstart, GraphViewSeriesStyle style) {
+
+    @Override
+	public void drawSeries(Canvas canvas, com.aurnhammer.fitnesstracker.views.GraphViewDataInterface[] values, float graphwidth, float graphheight, float border, double minX, double minY, double diffX, double diffY, float horstart, GraphViewSeriesStyle style) {
 		// draw background
 		double lastEndY = 0;
 		double lastEndX = 0;
+        difY=diffY;
+        tempborder=border;
+        minXX=minX;
+        minYY=minY;
+        difX=diffX;
+        if(onTouch&&label!=null){
+            Log.d(TAG, "drawing label" + label + "at " + x + "     " + y);
+            //Toast.makeText(getContext(),label.substring(0,4),Toast.LENGTH_SHORT).show();
+
+           canvas.drawText(label,(float)x,(float)y,paint);
+            canvas.drawLine((float)x,graphheight+tempborder, (float)x, tempborder, paint);           //invalidate();
+        }
 
 		// draw data
-		paint.setStrokeWidth(style.thickness);
-		paint.setColor(style.color);
+		paint.setStrokeWidth(8);
+		paint.setColor(Color.WHITE);
 
 
 		Path bgPath = null;
@@ -75,6 +101,7 @@ public class LineGraphView extends GraphView {
 		lastEndX = 0;
 		float firstX = 0;
 		for (int i = 0; i < values.length; i++) {
+          //  Log.d(TAG,values[i].getY()+"    Y value"+values[i].getX()+" x value");
 			double valY = values[i].getY() - minY;
 			double ratY = valY / diffY;
 			double y = graphheight * ratY;
@@ -91,12 +118,14 @@ public class LineGraphView extends GraphView {
 
 				// draw data point
 				if (drawDataPoints) {
+                   // Log.d(TAG,endX+"    Y point"+endY+" X point");
 					//fix: last value was not drawn. Draw here now the end values
 					canvas.drawCircle(endX, endY, dataPointsRadius, paint);
 				}
 
 				canvas.drawLine(startX, startY, endX, endY, paint);
 				if (bgPath != null) {
+                    Log.d(TAG,"bgpath");
 					if (i==1) {
 						firstX = startX;
 						bgPath.moveTo(startX, startY);
@@ -105,21 +134,25 @@ public class LineGraphView extends GraphView {
 				}
 			} else if (drawDataPoints) {
 				//fix: last value not drawn as datapoint. Draw first point here, and then on every step the end values (above)
+
 				float first_X = (float) x + (horstart + 1);
 				float first_Y = (float) (border - y) + graphheight;
 				canvas.drawCircle(first_X, first_Y, dataPointsRadius, paint);
+
 			}
 			lastEndY = y;
 			lastEndX = x;
 		}
+        paint.setStyle(Paint.Style.FILL);
 
 		if (bgPath != null) {
-			// end / close path
+			Log.d(TAG,"bgpath");
 			bgPath.lineTo((float) lastEndX, graphheight + border);
 			bgPath.lineTo(firstX, graphheight + border);
 			bgPath.close();
 			canvas.drawPath(bgPath, paintBackground);
 		}
+
 	}
 
 	public int getBackgroundColor() {
@@ -174,4 +207,49 @@ public class LineGraphView extends GraphView {
 		this.drawDataPoints = drawDataPoints;
 	}
 
+   /* @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                onTouch=true;
+                mX=event.getX();
+                mY=event.getY();
+                graphViewContentView.invalidate();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float dx = Math.abs(event.getX() - mX);
+                float dy = Math.abs(event.getY() - mY);
+
+                if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+                    onTouch = true;
+                    label = String.valueOf(getValuefromY(event.getY()));
+                    x = event.getX();
+                    y = event.getY();
+                    graphViewContentView.invalidate();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                onTouch=false;
+                label=null;
+                graphViewContentView.invalidate();
+                break;
+            default:
+                return false;
+        }
+        graphViewContentView.invalidate();
+        return true;
+
+    }
+*/
+    protected double getValuefromY(double y){
+        /*double temp=(tempborder+(x-getGraphHeight()))/getGraphHeight();
+        temp= (temp*difY)+getMinY();
+        return temp;*/
+
+       double sum=tempborder+getGraphHeight()-y;
+        double temp= (sum*difY)/getGraphHeight();
+        temp=temp+getMinY();
+       return (int)Math.round(temp);
+
+    }
 }
